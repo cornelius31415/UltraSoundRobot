@@ -32,20 +32,9 @@ void setup() {
 void loop() {
  
   moveForward();
-  float distance;
-  distance = measureDistance();
 
-  // create random integer to decide randomly if turning left or right
-  uint8_t randomNumber = random(1,254);
-  if (distance < 90 && isEven(randomNumber)) {
-
-  turnRight();
-
-  }
-  if (distance < 90 && !isEven(randomNumber)) {
-      
-  turnLeft();
-  
+  if (checkDistance(measureDistance())){
+    turn();
   }
   
   delay(1000);       
@@ -157,6 +146,18 @@ float measureDistance() {
   
 }
 
+
+bool checkDistance(float distance){
+
+  if (distance < 90) {
+    return true;
+  }
+  else {
+    return false;
+  }
+  
+}
+
 bool isEven(uint8_t number) {
   if (number % 2 == 0) {
     return true;
@@ -164,5 +165,19 @@ bool isEven(uint8_t number) {
 
   else { 
     return false;
+  }
+}
+
+void turn() {
+
+  // create random integer to decide randomly if turning left or right
+  uint8_t randomNumber = random(1,254);
+  
+  if (isEven(randomNumber)) {
+  turnRight();
+  }
+  
+  else {
+  turnLeft();
   }
 }
