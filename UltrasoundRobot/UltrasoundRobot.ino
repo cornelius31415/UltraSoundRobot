@@ -14,12 +14,15 @@ AF_DCMotor motor4(4);
 
 uint8_t robotSpeed = 200;
 
+float distance;
+uint8_t criticalDistance = 40;
+
 // -------------------------------------------------------------------------------------
 //                                        SETUP
 // -------------------------------------------------------------------------------------
 
 void setup() {
-
+Serial.begin(9600);
   setupMotors();
   setupUltraSound();
   
@@ -32,12 +35,49 @@ void setup() {
 void loop() {
  
   moveForward();
-
-  if (checkDistance(measureDistance())){
-    turn();
+  distance = measureDistance();
+  
+  Serial.print("Measured Distance: ");
+  Serial.println(distance);  
+  
+  uint8_t randomNumber = random(1,254);
+  
+  if (distance < criticalDistance && distance > 1 && isEven(randomNumber)) {
+    // the idea of the following procedure is to help the robot not getting
+    // stuck in narrow areas due to repeated low distance measurement
+    // and non-stop turning when there is no space to turn
+    
+    // move a bit backwards
+    releaseMotors();
+    moveBackward();
+    delay(500); 
+    
+    // then turn  
+    turnRight();
+    
+    // then move a little bit forward
+    moveForward();
+    delay(500);
+    releaseMotors();
+    
   }
   
-  delay(1000);       
+  if (distance < criticalDistance && distance > 1 && !isEven(randomNumber)) {
+    // same as before, just turning left this time
+    
+    releaseMotors();
+    moveBackward();
+    delay(500);   
+  
+    turnLeft();
+    
+    moveForward();
+    delay(500);
+    releaseMotors();
+    
+  }
+  
+  delay(100);       
         
 }
 
@@ -73,6 +113,14 @@ void setupUltraSound() {
 // -------------------------------------------------------------------------------------
 //                               ROBOT MOVEMENTS
 // -------------------------------------------------------------------------------------
+void releaseMotors() {
+  motor1.run(RELEASE);  
+  motor2.run(RELEASE);  
+  motor3.run(RELEASE);  
+  motor4.run(RELEASE);  
+  
+}
+
 
 void moveForward() {
   motor1.run(FORWARD);   
@@ -81,9 +129,16 @@ void moveForward() {
   motor4.run(FORWARD);   
 }
 
+void moveBackward() {
+  motor1.run(BACKWARD);   
+  motor2.run(BACKWARD);     
+  motor3.run(BACKWARD);  
+  motor4.run(BACKWARD);   
+  
+}
 
 void turnRight() {
-    
+  
   motor1.run(RELEASE);  
   motor2.run(RELEASE);  
   motor3.run(RELEASE);  
@@ -93,7 +148,8 @@ void turnRight() {
 
   motor1.run(BACKWARD);   
   motor2.run(BACKWARD);    
-  delay(1000); 
+  
+  delay(800); 
 
   motor1.run(RELEASE);  
   motor2.run(RELEASE);  
@@ -109,8 +165,9 @@ void turnLeft() {
   delay(500);
 
   motor3.run(BACKWARD);   
-  motor4.run(BACKWARD);    
-  delay(1000); 
+  motor4.run(BACKWARD);  
+    
+  delay(800); 
 
   motor3.run(RELEASE);  
   motor4.run(RELEASE);  
@@ -146,18 +203,6 @@ float measureDistance() {
   
 }
 
-
-bool checkDistance(float distance){
-
-  if (distance < 90) {
-    return true;
-  }
-  else {
-    return false;
-  }
-  
-}
-
 bool isEven(uint8_t number) {
   if (number % 2 == 0) {
     return true;
@@ -165,19 +210,5 @@ bool isEven(uint8_t number) {
 
   else { 
     return false;
-  }
-}
-
-void turn() {
-
-  // create random integer to decide randomly if turning left or right
-  uint8_t randomNumber = random(1,254);
-  
-  if (isEven(randomNumber)) {
-  turnRight();
-  }
-  
-  else {
-  turnLeft();
   }
 }
